@@ -1,34 +1,39 @@
 #include"car.h"
 
-
-void draw()
+void drawmenu()
 {
 	cout << "***********************************\n";
 	cout << "**         停车场管理系统        **\n";
 	cout << "***********************************\n";
 	cout << "**       请选择您需要的操作      **\n";
-	cout << "*        1.查看停车场车辆情况     *\n";
-	cout << "*        2.进入停车场            *\n";
-	cout << "*        3.离开停车场            *\n";
+	cout << "*        1.查看停车场车辆信息     *\n";
+	cout << "*        2.进入停车场             *\n";
+	cout << "*        3.离开停车场             *\n";
+	cout << "*        4.查看便道内车辆信息     *\n";
 	cout << "*        0.退出停车场系统         *\n";
 	cout << "***********************************\n";
 }
 
-void DisplayCar(parkinglot s, sideway p)
+void Manager::parkinginfo()
 {
-	if (s.length != 0)
+	if (p->length == 0)	
 	{
-		for (int i = 0; i < s.length; i++)
-		{
-			cout << "第"<< i+1 <<"辆车:"  << endl;
-			cout << "车牌号:" << s.parkinglot[i]->getNumber()<<endl;
-			cout << "进入时间:" << s.parkinglot[i]->getAtime() << ":" << s.parkinglot[i]->getAtime1()<<endl;
-			if (s.parkinglot[i]->getDtime() != 24)
-			{
-				cout << "离开时间:" << s.parkinglot[i]->getDtime() << ":" << s.parkinglot[i]->getDtime1();
-				cout << "费用:" << s.parkinglot[i]->getAmount() << endl;
-			}
-		 }
+		cout << "停车场内无车辆！" << endl;
+		return;
 	}
-	
+
+	cout << "********停车场内车辆信息********\n\n";
+
+	cout << "车位号" << "	" << "车牌号" << "		" << "到达时间" << endl;
+	for (int i = 0; i < Max_Size; i++)
+	{
+		if (p->parkinglot[i] != nullptr)
+			cout << i + 1 << "	" << p->parkinglot[i]->getNumber() << "	"
+			<< p->parkinglot[i]->getArrivehour() << " " << ":" 
+			<< p->parkinglot[i]->getArriveMin() << endl;
+		else
+		{
+			cout << i + 1 << "	" << "null\n";
+		}
+	}
 }

@@ -1,2 +1,5 @@
-﻿  car.cpp
-  停车场管理系统.vcxproj -> C:\Users\Ydx28\Documents\专业\parking1-main\x64\Debug\停车场管理系统.exe
+﻿  parkfunc.cpp
+E:\代码\parking1-main\停车场管理系统\parkfunc.cpp(97,7): warning C4101: “i”: 未引用的局部变量
+  sidewayfunc.cpp
+  正在生成代码...
+  停车场管理系统.vcxproj -> E:\代码\parking1-main\x64\Debug\停车场管理系统.exe

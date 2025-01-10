@@ -1,86 +1,85 @@
+#pragma once
 #include<iostream>
 #include<string>
 #include<sstream>
 #include<fstream>
 #include<time.h>
 using namespace std;
+#define Max_Size 5
+#define refresh true
+#define append false
 
-
-#define Max_Size 3
-
+//车类
 class car
 {
 public:
 	car() {};
-	car(string carnumber1):carnumber(carnumber1)
+	car(const string carn)
+		:carnumber(carn)
 	{
 		parktime();
 	}
+	car(const string carn, int Arrivehour, int Arrivemin )
+		:carnumber(carn), arrivehour(Arrivehour), arrivemin(Arrivemin)
+	{
+		arrive_min_sum = arrivehour * 60 + arrivemin;
+	};
+
 	string getNumber() { return carnumber; }
-	int getAtime()	{ return arrivehour; }
-	int getAtime1() { return arrivemin; }
-	
-	int getDtime() { return departhour; }
-	int getDtime1() { return departmin; }
+	int getArrivehour()	{ return arrivehour; }
+	int getArriveMin() { return arrivemin; }
+	int getDepartHour() { return departhour; }
+	int getDepartMin() { return departmin; }
 	double getAmount() { return amount; }
 	
 	void parktime()   //提取字符串中的小时分钟计算金额
 	{
-		//int arrivehour, departhour, arrivemin, departmin;
-		//version 1
-		
-		//stringstream dtimestream(departtime);
-
-		
-		//dtimestream >> departhour >> ch >> departmin;
-		//version 2
 		time_t atime;
 		struct tm p;
-		
+
 
 		time(&atime);
 		localtime_s(&p, &atime);
-		//atimestream >> p->tm_hour >> ch >> p->tm_min;
+
 		arrivehour = p.tm_hour;
 		arrivemin = p.tm_min;
-		arrive_min_sum = p.tm_hour * 60 + p.tm_min;
-		//double depart_min_sum = departhour * 60 + departmin;
-		//parkingtime = (depart_min_sum - arrive_min_sum) / 60.0;
-		//amount = parkingtime * 10.0;
-	}
-	void Getdeparttime()
-	{
-        
-		
-		time_t dime;
-		struct tm q;
-		time(&dime);
-		localtime_s(&q, &dime);
-		
-		departhour = q.tm_hour;
-		departmin = q.tm_min;
+		arrive_min_sum = arrivehour * 60 + arrivemin;
 
-		depart_min_sum = q.tm_hour * 60 + q.tm_min;
 	}
-	void sumAmout()
-		//计算总金额
+
+	//计算离开时间
+	void departtime()
 	{
+		time_t dtime;
+		struct tm p;
+
+		time(&dtime);
+		localtime_s(&p, &dtime);
+
+		departhour = p.tm_hour;
+		departmin = p.tm_min;
+		depart_min_sum = departhour * 60 + departmin;
+		//depart_min_sum = p.tm_hour * 60 + p.tm_min;
+	}
+	void calculateAmount()   //提取字符串中的小时分钟计算金额
+	{
+		
 		
 		parkingtime = (depart_min_sum - arrive_min_sum) / 60.0;
 		amount = parkingtime * 10.0;
 	}
 	
-
+	
 private:
 	string carnumber; //车牌号
-	int arrivehour; //便于输出到达时间
-	int arrivemin; 
-	int departhour = 24; //便于输出离开时间
-	int departmin;
-	double arrive_min_sum;//便于计算的到达时间
-	double depart_min_sum;//便于计算的离开时间visu
-	double parkingtime; //停车时间
-	double amount; //总金额
+	int arrivehour=0; //到达时间
+	int arrivemin=0;
+	int departhour=0; //离开时间
+	int departmin=0;
+	double arrive_min_sum=0;
+	double depart_min_sum=0;
+	double parkingtime=0; //停车时间
+	double amount=0; //总金额
 };
 
 //停车场结构
@@ -97,18 +96,77 @@ typedef struct
 	int front, rear;
 }sideway;
 
+typedef struct
+{
+	car* stack[Max_Size];
+	int top;
+}temstack;
 
-//停车场相关函数
-void initparkinglot(parkinglot*& p);
-void arrive(parkinglot* p, sideway* s, const char* carnumber);
-void depart(parkinglot* p, int pos);
-void sqfindcar(parkinglot* p, string carname);
-void savecarinfo(parkinglot* p);
+//管理员类
+class Manager
+{
+private:
+	
+	parkinglot* p;
+	sideway* s;
+	temstack* t;
 
-//便道相关函数
-void initsideway(sideway*& s);
-void ensideway(sideway* s, car* c);
-car* desideway(sideway* s);
+public:
+	Manager()
+	{
+		initparkinglot();
+		initsideway();
+		loadfile();
+	}
 
-void draw();
-void DisplayCar(parkinglot s, sideway p);
+	//初始化顺序表停车场
+	void initparkinglot()
+	{
+		p = new parkinglot;
+		p->length = 0;
+
+		for (int i = 0; i < Max_Size; i++)
+			p->parkinglot[i] = nullptr;
+	}
+
+	//初始化队列便道
+	void initsideway()
+	{
+		s = new sideway;
+		for (int i = 0; i < Max_Size; i++)
+			s->sideway[i] = nullptr;
+		s->front = s->rear = 0;
+	}
+
+	//初始化栈用于存放便道车辆
+	void initstack()
+	{
+		t = new temstack;
+		for (int i = 0; i < Max_Size; i++)
+			t->stack[i] = nullptr;
+		t->top = -1;
+	}
+
+	//停车场相关函数
+	void arrive();
+	void depart();
+	void sqfindcar(parkinglot* p, string carname);
+	void parkinginfo();
+
+	//便道相关函数
+	bool issidewayempty();
+	void ensideway(car* c);
+	car* desideway();
+	void showsidewayinfo();
+	bool isstackempty();
+	void push(car* c);
+	bool pop(car*& c);
+	void departsideway();
+
+	//文件相关函数
+    void savecarinfo(bool mode);
+	void savecarlog(int i);
+	void loadfile();
+ };
+
+void drawmenu();
