@@ -4,82 +4,118 @@
 #include<sstream>
 #include<fstream>
 #include<time.h>
+#include<iomanip>
 using namespace std;
 #define Max_Size 5
 #define refresh true
 #define append false
 
-//车类
 class car
 {
 public:
-	car() {};
-	car(const string carn)
-		:carnumber(carn)
+	car(const string carn, int arrivehour, int arrivemin, int space)
+		:carnumber(carn), arrive_min_sum(arrivehour * 60 + arrivemin), 
+		depart_min_sum(0), amount(0),spacenum(space) 
+	{
+	};
+
+	car(string carnumber1) :carnumber(carnumber1)
+	{}
+
+	car(string carnumber1, int space) :carnumber(carnumber1), spacenum(space)
 	{
 		parktime();
 	}
-	car(const string carn, int Arrivehour, int Arrivemin )
-		:carnumber(carn), arrivehour(Arrivehour), arrivemin(Arrivemin)
-	{
-		arrive_min_sum = arrivehour * 60 + arrivemin;
-	};
 
+	//获取车牌号
 	string getNumber() { return carnumber; }
-	int getArrivehour()	{ return arrivehour; }
-	int getArriveMin() { return arrivemin; }
-	int getDepartHour() { return departhour; }
-	int getDepartMin() { return departmin; }
+	//获取到达时间总分钟数
+	double getAtimesum() { return arrive_min_sum; }
+	//获取离开时间总分钟数
+	double getDtimesum() { return depart_min_sum; }
+	//返回金额
 	double getAmount() { return amount; }
-	
-	void parktime()   //提取字符串中的小时分钟计算金额
+	//返回车位号
+	int getSpace() { return spacenum; }
+
+	void setcarnum(string num) { carnumber = num; }
+
+	void setcarspace(int space) { spacenum = space; }
+	//计算到达时间，并转换为分钟数
+	void parktime()
 	{
 		time_t atime;
 		struct tm p;
 
-
 		time(&atime);
 		localtime_s(&p, &atime);
-
-		arrivehour = p.tm_hour;
-		arrivemin = p.tm_min;
+		int arrivehour = p.tm_hour;
+		int arrivemin = p.tm_min;
 		arrive_min_sum = arrivehour * 60 + arrivemin;
-
 	}
 
-	//计算离开时间
-	void departtime()
+	//获取离开时间并转化为分钟数并求总价钱
+	void Getdeparttime()
 	{
-		time_t dtime;
-		struct tm p;
+		time_t dime;
+		struct tm q;
+		time(&dime);
+		localtime_s(&q, &dime);
 
-		time(&dtime);
-		localtime_s(&p, &dtime);
-
-		departhour = p.tm_hour;
-		departmin = p.tm_min;
+		int departhour = q.tm_hour;
+		int departmin = q.tm_min;
 		depart_min_sum = departhour * 60 + departmin;
-		//depart_min_sum = p.tm_hour * 60 + p.tm_min;
+		if (depart_min_sum >= arrive_min_sum)
+		{
+			parkingtime = (depart_min_sum - arrive_min_sum) / 60;
+		}
+		else
+		{
+			int totalmin = (24 * 60 - arrive_min_sum) + depart_min_sum;
+			parkingtime = totalmin / 60;
+		}
+		amount = parkingtime * rate_per_hour;
 	}
-	void calculateAmount()   //提取字符串中的小时分钟计算金额
+
+	//求计费单价
+	static double getRate()
 	{
-		
-		
-		parkingtime = (depart_min_sum - arrive_min_sum) / 60.0;
-		amount = parkingtime * 10.0;
+		return rate_per_hour;
 	}
-	
-	
+
+	//设置计费单价
+	static void setRate(double rate)
+	{
+		rate_per_hour = rate;
+	}
+
+	int gethour() 
+	{ 
+		return arrive_min_sum / 60;
+	}
+	int getmin()
+	{ 
+		return arrive_min_sum % 60; 
+	}
+	int getdeparthour() 
+	{ 
+		return depart_min_sum / 60;
+	}
+	int getdepartmin() 
+	{
+		return depart_min_sum % 60;
+	}
+
+	void setspace(int space) { spacenum = space; }
 private:
-	string carnumber; //车牌号
-	int arrivehour=0; //到达时间
-	int arrivemin=0;
-	int departhour=0; //离开时间
-	int departmin=0;
-	double arrive_min_sum=0;
-	double depart_min_sum=0;
-	double parkingtime=0; //停车时间
-	double amount=0; //总金额
+	int flag=0;
+	int spacenum;//车位号
+	string carnumber; //车牌号	
+	int parkingtime; //停车时间
+	double amount; //总金额
+	int arrive_min_sum;//总分钟数
+	int depart_min_sum;
+	static double rate_per_hour;
 };
 
 //停车场结构
@@ -96,77 +132,60 @@ typedef struct
 	int front, rear;
 }sideway;
 
-typedef struct
-{
-	car* stack[Max_Size];
-	int top;
-}temstack;
-
 //管理员类
 class Manager
 {
 private:
-	
 	parkinglot* p;
 	sideway* s;
-	temstack* t;
+	int emptyspace[Max_Size + 1];
 
 public:
 	Manager()
 	{
 		initparkinglot();
 		initsideway();
+		initspace();
 		loadfile();
 	}
 
 	//初始化顺序表停车场
-	void initparkinglot()
-	{
-		p = new parkinglot;
-		p->length = 0;
-
-		for (int i = 0; i < Max_Size; i++)
-			p->parkinglot[i] = nullptr;
-	}
+	void initparkinglot();
 
 	//初始化队列便道
-	void initsideway()
-	{
-		s = new sideway;
-		for (int i = 0; i < Max_Size; i++)
-			s->sideway[i] = nullptr;
-		s->front = s->rear = 0;
-	}
-
-	//初始化栈用于存放便道车辆
-	void initstack()
-	{
-		t = new temstack;
-		for (int i = 0; i < Max_Size; i++)
-			t->stack[i] = nullptr;
-		t->top = -1;
-	}
+	void initsideway();
 
 	//停车场相关函数
 	void arrive();
 	void depart();
-	void sqfindcar(parkinglot* p, string carname);
-	void parkinginfo();
+
+	//查找函数(顺序查找和二分查找)
+	car* sqfindcar(string carnum);
+	car* binarysearch(int space);
+	void findcar();
+
+	//排序函数
+	void insertsort();
+	void heapsort();
+	void sift(int low, int high);
+	void sort();
+	void quicksort(int low, int high);
 
 	//便道相关函数
 	bool issidewayempty();
 	void ensideway(car* c);
 	car* desideway();
 	void showsidewayinfo();
-	bool isstackempty();
-	void push(car* c);
-	bool pop(car*& c);
-	void departsideway();
 
 	//文件相关函数
-    void savecarinfo(bool mode);
+	void savecarinfo(bool mode);
 	void savecarlog(int i);
 	void loadfile();
- };
 
-void drawmenu();
+	//其他函数
+	static void drawmenu();
+	void printonecar(car* tem);
+	void parkinginfo();
+	void initspace();
+	void modifyinfo();
+};
